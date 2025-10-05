@@ -1,0 +1,110 @@
+# ============================================================================
+# FILE: config/device_mappings.yaml
+# ============================================================================
+# Device name mappings: source folder → target device category
+devices:
+  sony-fx-3: CAM_fx3
+  sony-fx-30: CAM_fx30
+  sony-zv-e10: CAM_zv-e10
+  dji-osmo-pocket-3: CAM_osmo-pocket-3
+  zoom-f3: AUDIO_zoom-f3
+  dji-mic-2: AUDIO_dji-mic-2
+
+# Special handling for Riverside.fm cloud recordings
+riverside:
+  enabled: true
+  device_name: CAM_riverside
+  source_patterns:
+    - "aipe-footage/*/00-raw/video/*.MP4"
+    - "aipe-footage/*/00-raw/video/*.mp4"
+
+# Projects that preserve their internal structure
+projects:
+  - name: aipe-footage
+    source_path: aipe-footage
+    target_path: /Projects/aipe
+    preserve_structure: true
+    description: "AIPE podcast episodes from Riverside.fm"
+  
+  - name: video_mama_2025
+    source_path: video_mama_2025
+    target_path: /Projects/video_mama_2025
+    preserve_structure: true
+    description: "Video Mama 2025 project"
+  
+  - name: capcut
+    source_path: capcut
+    target_path: /Projects/capcut/renders
+    preserve_structure: false
+    exclude_patterns:
+      - "User Data/*"  # Skip CapCut application cache
+    description: "CapCut exports (app cache excluded)"
+  
+  - name: billionblog
+    source_path: billionblog
+    target_path: /Projects/billionblog
+    preserve_structure: true
+    description: "Billionblog meta-project"
+
+# Audio tracks handling
+audio_tracks:
+  source_path: audio-tracks
+  target_base: /Originals/AUDIO_dji-mic-2
+  extract_date_from_filename: true
+  filename_pattern: "DJI_\\d+_(\\d{8})_\\d+\\.WAV"
+  description: "DJI Mic 2 recordings - organized by date from filename"
+
+# Global exclusions
+exclude:
+  # System files
+  - ".DS_Store"
+  - "*.db"
+  - "*.db-journal"
+  - ".sync_*"
+  
+  # macOS system folders
+  - ".DocumentRevisions-V100"
+  - ".fseventsd"
+  - ".Spotlight-V100"
+  - ".TemporaryItems"
+  - ".Trashes"
+  
+  # CapCut app data
+  - "capcut/User Data"
+  
+  # Temporary files
+  - "*.tmp"
+  - "*.temp"
+
+# File type categorization
+file_types:
+  video:
+    extensions: [".mp4", ".MP4", ".mov", ".MOV", ".avi", ".mkv"]
+    target: VIDEO
+  
+  audio:
+    extensions: [".wav", ".WAV", ".mp3", ".MP3", ".aac", ".flac"]
+    target: AUDIO
+  
+  image:
+    extensions: [".jpg", ".JPG", ".jpeg", ".png", ".raw", ".RAW", ".dng"]
+    target: STILLS
+  
+  metadata:
+    extensions: [".xml", ".XML", ".json", ".yaml"]
+    target: METADATA
+
+# Duplicate handling strategy
+duplicates:
+  priority:
+    # Prefer files in these locations (in order)
+    - "/Originals/CAM_*"
+    - "/Originals/AUDIO_*"
+    - "/Projects/aipe"
+    - "/Projects/*"
+  
+  # What to do with duplicate locations
+  action: "symlink"  # Options: skip, symlink, log_only
+  
+  # Minimum file size to check (skip tiny files)
+  min_size_bytes: 1048576  # 1MB

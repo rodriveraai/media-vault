@@ -205,3 +205,39 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# Analysis Results (IMPORTANT: Don't commit actual data)
+analysis_results/
+*.db
+*.db-journal
+
+# Logs
+*.log
+migration_errors.log
+verification_errors.log
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Do NOT commit actual media files
+*.mp4
+*.MP4
+*.mov
+*.MOV
+*.wav
+*.WAV
+*.mp3
+*.MP3
+*.jpg
+*.JPG
+*.png
+*.raw
+*.RAW
+
+# But DO commit config and documentation
+!config/*.yaml
+!*.md
+!*.txt

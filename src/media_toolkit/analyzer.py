@@ -80,9 +80,10 @@ class MediaAnalyzer:
         """Determine device name from file path"""
         path_str = str(filepath.relative_to(self.source_root))
         
-        # Check device mappings
-        for source_folder, device_name in self.config['devices'].items():
-            if path_str.startswith(source_folder):
+        # Check device mappings - sort by length descending to match most specific first
+        sorted_devices = sorted(self.config['devices'].items(), key=lambda x: len(x[0]), reverse=True)
+        for source_folder, device_name in sorted_devices:
+            if path_str.startswith(source_folder + '/'):
                 return device_name
         
         # Check if it's a Riverside recording

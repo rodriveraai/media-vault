@@ -1,4 +1,4 @@
-# ============================================================================
+# src/media_toolkit/models.py
 # FILE: src/media_toolkit/models.py
 # ============================================================================
 from dataclasses import dataclass, field

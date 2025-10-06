@@ -4,10 +4,10 @@ devices:
   00_raw_sources/sony-fx-30: CAM_fx30
   00_raw_sources/sony-zv-e10: CAM_zv-e10
   00_raw_sources/dji-osmo-pocket-3: CAM_osmo-pocket-3
-  00_raw_sources/dji-osmo-pocket-3-mic: AUDIO_osmo-pocket-3-mic
-  00_raw_sources/dji-mic-2: AUDIO_dji-mic-2
-  00_raw_sources/zoom-fr: AUDIO_zoom-fr
-  00_raw_sources/audio-tracks: AUDIO_dji-mic-2
+  00_raw_sources/dji-osmo-pocket-3-mic: MIC_osmo-pocket-3-mic
+  00_raw_sources/dji-mic-2: MIC_dji-mic-2
+  00_raw_sources/zoom-fr: MIC_zoom-fr
+  00_raw_sources/audio-tracks: MIC_dji-mic-2
 
 riverside:
   enabled: true
@@ -39,6 +39,11 @@ projects:
     target_path: /Projects/billionblog
     preserve_structure: true
 
+  - name: Photos
+    source_path: Photos
+    target_path: /Projects/personal-photos
+    preserve_structure: true
+
 audio_tracks:
   source_path: audio-tracks
   target_base: /Originals/AUDIO_dji-mic-2
@@ -65,9 +70,9 @@ file_types:
   audio:
     extensions: [".wav", ".WAV", ".mp3", ".MP3", ".aac", ".flac"]
   image:
-    extensions: [".jpg", ".JPG", ".jpeg", ".png", ".raw", ".RAW", ".dng"]
+    extensions: [".jpg", ".JPG", ".jpeg", ".png", ".raw", ".RAW", ".dng", ".SCR"]
   metadata:
-    extensions: [".xml", ".XML", ".json", ".yaml", ".LRF", ".THM", ".SCR"]
+    extensions: [".xml", ".XML", ".json", ".yaml", ".LRF", ".THM"]
     target: METADATA
 
 duplicates:

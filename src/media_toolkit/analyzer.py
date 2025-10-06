@@ -338,32 +338,25 @@ class MediaAnalyzer:
             created_at=datetime.now(),
         )
         
-        # Save as JSON
+        # Save as JSON using Pydantic serialization
         manifest_path = output_dir / "migration_manifest.json"
+        manifest_dict = manifest.model_dump(mode='json')
+        # Convert Path objects to strings for JSON
+        manifest_dict['source_root'] = str(manifest.source_root)
+        manifest_dict['target_root'] = str(manifest.target_root)
+        manifest_dict['created_at'] = manifest.created_at.isoformat()
+        manifest_dict['total_size_gb'] = manifest.total_size_gb
+        
+        for file_data in manifest_dict['files']:
+            file_data['source_path'] = str(file_data['source_path'])
+            file_data['target_path'] = str(file_data['target_path']) if file_data['target_path'] else None
+            file_data['creation_date'] = file_data['creation_date'] if file_data.get('creation_date') else None
+            # Add computed properties
+            size_bytes = file_data['size_bytes']
+            file_data['size_mb'] = size_bytes / 1024 / 1024
+        
         with open(manifest_path, 'w') as f:
-            json.dump({
-                'source_root': str(manifest.source_root),
-                'target_root': str(manifest.target_root),
-                'total_files': manifest.total_files,
-                'total_size_bytes': manifest.total_size_bytes,
-                'total_size_gb': manifest.total_size_gb,
-                'created_at': manifest.created_at.isoformat(),
-                'files': [
-                    {
-                        'source_path': str(f.source_path),
-                        'target_path': str(f.target_path),
-                        'size_bytes': f.size_bytes,
-                        'size_mb': f.size_mb,
-                        'hash': f.hash,
-                        'creation_date': f.creation_date.isoformat() if f.creation_date else None,
-                        'device': f.device,
-                        'file_type': f.file_type,
-                        'is_duplicate': f.is_duplicate,
-                        'duplicate_group_id': f.duplicate_group_id,
-                    }
-                    for f in self.files
-                ]
-            }, f, indent=2)
+            json.dump(manifest_dict, f, indent=2, default=str)
         
         console.print(f"[green]✓[/green] Saved manifest: {manifest_path}")
         

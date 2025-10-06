@@ -4,10 +4,10 @@ devices:
   00_raw_sources/sony-fx-30: CAM_fx30
   00_raw_sources/sony-zv-e10: CAM_zv-e10
   00_raw_sources/dji-osmo-pocket-3: CAM_osmo-pocket-3
-  00_raw_sources/dji-osmo-pocket-3-mic: MIC_osmo-pocket-3-mic
-  00_raw_sources/dji-mic-2: MIC_dji-mic-2
-  00_raw_sources/zoom-fr: MIC_zoom-fr
-  00_raw_sources/audio-tracks: MIC_dji-mic-2
+  00_raw_sources/dji-osmo-pocket-3-mic: AUDIO_osmo-pocket-3-mic
+  00_raw_sources/dji-mic-2: AUDIO_dji-mic-2
+  00_raw_sources/zoom-fr: AUDIO_zoom-fr
+  00_raw_sources/audio-tracks: AUDIO_osmo-pocket-3-mic
 
 riverside:
   enabled: true
@@ -46,7 +46,7 @@ projects:
 
 audio_tracks:
   source_path: audio-tracks
-  target_base: /Originals/AUDIO_dji-mic-2
+  target_base: /Originals/AUDIO_osmo-pocket-3-mic
   extract_date_from_filename: true
   filename_pattern: "DJI_\\d+_(\\d{8})_\\d+\\.WAV"
 

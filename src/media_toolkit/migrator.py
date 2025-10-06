@@ -39,11 +39,14 @@ class MediaMigrator:
     
     def _create_sidecar(self, media_file: dict, target_path: Path) -> None:
         """Create YAML sidecar metadata file"""
+        clip_id = media_file['hash']
+        if not str(clip_id).startswith("blake3:"):
+            clip_id = f"blake3:{clip_id}"
         sidecar_path = self.target_root / "Catalog" / "sidecars" / target_path.relative_to(self.target_root).with_suffix('.yaml')
         sidecar_path.parent.mkdir(parents=True, exist_ok=True)
         
         sidecar_data = {
-            'id': media_file['hash'],
+            'id': clip_id,
             'original_path': media_file['source_path'],
             'target_path': str(target_path),
             'device': media_file.get('device'),

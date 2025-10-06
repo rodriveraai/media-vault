@@ -13,16 +13,47 @@ TARGET_VOLUME := /Volumes/RodNAS/Media
 .PHONY: help
 help:
 	@echo ''
-	@echo '$(YELLOW)Media Archive Migration Toolkit$(RESET)'
+	@echo '$(YELLOW)═══════════════════════════════════════════════════════════════════$(RESET)'
+	@echo '$(YELLOW)                  Media Archive Migration Toolkit$(RESET)'
+	@echo '$(YELLOW)═══════════════════════════════════════════════════════════════════$(RESET)'
 	@echo ''
-	@echo '$(YELLOW)Setup:$(RESET)'
-	@echo '  $(GREEN)make setup$(RESET)         - Create environment and install'
-	@echo '$(YELLOW)Analysis:$(RESET)'
-	@echo '  $(GREEN)make analyze$(RESET)       - Scan archive (4-6 hours)'
-	@echo '  $(GREEN)make analyze-dry$(RESET)   - Quick preview'
-	@echo '$(YELLOW)Migration:$(RESET)'
-	@echo '  $(GREEN)make migrate$(RESET)       - Copy to NAS (8-12 hours)'
-	@echo '  $(GREEN)make verify$(RESET)        - Verify migration'
+	@echo '$(BLUE)PHASE 0: Initial Setup$(RESET)'
+	@echo '  $(GREEN)make setup$(RESET)              - Create Python environment and install dependencies'
+	@echo '  $(GREEN)make check-volumes$(RESET)      - Verify source/target volumes are accessible'
+	@echo ''
+	@echo '$(BLUE)PHASE 1: Analysis (Before NAS Arrives)$(RESET)'
+	@echo '  $(GREEN)make analyze-dry$(RESET)        - Quick scan without hash computation (20 min)'
+	@echo '  $(GREEN)make analyze$(RESET)            - Full analysis with duplicate detection (4-6 hours)'
+	@echo '                              Computes BLAKE3 hashes, detects duplicates'
+	@echo ''
+	@echo '$(BLUE)PHASE 2: Migration (When NAS Arrives)$(RESET)'
+	@echo '  $(GREEN)make migrate$(RESET)            - Copy files to NAS with verification (8-12 hours)'
+	@echo '                              Creates folder structure, copies files, verifies hashes'
+	@echo '  $(GREEN)make verify$(RESET)             - Verify all files copied correctly'
+	@echo '                              Run before deleting source files!'
+	@echo ''
+	@echo '$(BLUE)PHASE 3: Ongoing Workflow$(RESET)'
+	@echo '  $(GREEN)make index-catalog$(RESET)      - Index YAML sidecars into searchable SQLite database'
+	@echo '  $(GREEN)make link-project$(RESET)       - Link footage into project structure'
+	@echo '                              Usage: make link-project PROJECT=ep-024 SHOOT=london DATE=2025-10-06 DEVICES="fx3 fx30"'
+	@echo ''
+	@echo '$(BLUE)Utilities$(RESET)'
+	@echo '  $(GREEN)make structure$(RESET)          - Show project file tree'
+	@echo '  $(GREEN)make clean$(RESET)              - Clean analysis results and Python cache'
+	@echo '  $(GREEN)make aggregate <dir>$(RESET)    - Aggregate source files into single document'
+	@echo '  $(GREEN)make add-paths$(RESET)          - Add file paths as comments to Python files'
+	@echo ''
+	@echo '$(YELLOW)───────────────────────────────────────────────────────────────────$(RESET)'
+	@echo '$(YELLOW)Typical Workflow:$(RESET)'
+	@echo '  1. make setup              → Install dependencies'
+	@echo '  2. make analyze-dry        → Preview what will be analyzed'
+	@echo '  3. make analyze            → Full analysis (run in tmux overnight)'
+	@echo '  4. Review analysis_results/ → Check duplicates_report.csv'
+	@echo '  5. [Wait for NAS to arrive]'
+	@echo '  6. make migrate            → Copy to NAS (run in tmux)'
+	@echo '  7. make verify             → Confirm 100% success'
+	@echo '  8. make index-catalog      → Build searchable database'
+	@echo '$(YELLOW)───────────────────────────────────────────────────────────────────$(RESET)'
 	@echo ''
 
 .PHONY: setup
@@ -261,5 +292,21 @@ add-paths: ## Add file paths as first-line comments to all Python files
 # Dummy target for directory arguments to aggregate
 %:
 	@:
+
+.PHONY: index-catalog
+index-catalog:
+	$(PYTHON) -m media_toolkit.catalog index-sidecars \
+	  --catalog /Volumes/RodNAS/Media/Catalog/catalog.sqlite \
+	  --root /Volumes/RodNAS/Media
+
+.PHONY: link-project
+link-project:
+	$(PYTHON) -m media_toolkit.link_into_project \
+	  --root /Volumes/RodNAS/Media \
+	  --project $(PROJECT) \
+	  --shoot $(SHOOT) \
+	  --date $(DATE) \
+	  $(foreach d,$(DEVICES),--device $(d))
+
 
 .DEFAULT_GOAL := help

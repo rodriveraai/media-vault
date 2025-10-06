@@ -30,6 +30,9 @@ dev = [
     "black>=23.0.0",
 ]
 
+[project.scripts]
+media-catalog = "media_toolkit.catalog:cli"
+
 [project.urls]
 "Homepage" = "https://github.com/rodriveraai/media-vault"
 "Bug Tracker" = "https://github.com/rodriveraai/media-vault/issues"

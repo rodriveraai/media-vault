@@ -67,7 +67,8 @@ file_types:
   image:
     extensions: [".jpg", ".JPG", ".jpeg", ".png", ".raw", ".RAW", ".dng"]
   metadata:
-    extensions: [".xml", ".XML", ".json", ".yaml"]
+    extensions: [".xml", ".XML", ".json", ".yaml", ".LRF", ".THM", ".SCR"]
+    target: METADATA
 
 duplicates:
   priority:

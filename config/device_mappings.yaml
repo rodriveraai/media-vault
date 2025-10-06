@@ -1,13 +1,18 @@
+# Treat any of these as logical “roots” to strip before matching device keys
+source_roots:
+  - "00_raw_sources"
+
 # Device name mappings: source folder → target device category
 devices:
-  00_raw_sources/sony-fx-3: CAM_fx3
-  00_raw_sources/sony-fx-30: CAM_fx30
-  00_raw_sources/sony-zv-e10: CAM_zv-e10
-  00_raw_sources/dji-osmo-pocket-3: CAM_osmo-pocket-3
-  00_raw_sources/dji-osmo-pocket-3-mic: AUDIO_osmo-pocket-3-mic
-  00_raw_sources/dji-mic-2: AUDIO_dji-mic-2
-  00_raw_sources/zoom-fr: AUDIO_zoom-fr
-  00_raw_sources/audio-tracks: AUDIO_osmo-pocket-3-mic
+  sony-fx-3: CAM_fx3
+  sony-fx-30: CAM_fx30
+  sony-zv-e10: CAM_zv-e10
+  dji-osmo-pocket-3: CAM_osmo-pocket-3
+  riverside: CAM_riverside
+  dji-osmo-pocket-3-mic: AUDIO_osmo-pocket-3-mic
+  dji-mic-2: AUDIO_dji-mic-2
+  zoom-fr: AUDIO_zoom-fr
+  audio-tracks: AUDIO_osmo-pocket-3-mic
 
 riverside:
   enabled: true

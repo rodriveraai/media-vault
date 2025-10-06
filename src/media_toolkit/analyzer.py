@@ -17,6 +17,7 @@ from collections import defaultdict
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich.table import Table
+from itertools import chain
 
 from .models import MediaFile, MigrationManifest
 from .utils.hash import compute_file_hash
@@ -45,7 +46,9 @@ class MediaAnalyzer:
     
     def _should_exclude(self, path: Path) -> bool:
         """Check if file/folder should be excluded"""
-        path_str = str(path)
+        # interpret patterns against logical path (post-strip)
+        logical_rel = self._logical_relpath(path) if path.is_absolute() else path
+        path_str = str(logical_rel)
         
         for pattern in self.config.get('exclude', []):
             if pattern.startswith('*'):
@@ -76,48 +79,64 @@ class MediaAnalyzer:
                 pass
         return None
     
+    def _logical_relpath(self, filepath: Path) -> Path:
+        """
+        Return a 'logical' project-relative path by stripping any configured
+        source_roots prefixes (e.g., '00_raw_sources/') if present.
+        This allows device mappings like 'sony-fx-3' to match even when the
+        physical path is '00_raw_sources/sony-fx-3/...'
+        """
+        rel = filepath.relative_to(self.source_root)
+        parts = rel.parts
+        source_roots = self.config.get("source_roots", [])
+        if parts and source_roots:
+            # If first segment matches any configured source root, drop it
+            if parts[0] in source_roots:
+                return Path(*parts[1:]) if len(parts) > 1 else Path(".")
+        return rel
+
     def _determine_device(self, filepath: Path) -> Optional[str]:
-        """Determine device name from file path"""
-        path_str = str(filepath.relative_to(self.source_root))
-        
-        # Check device mappings - sort by length descending to match most specific first
+        """Determine device name from (logical) file path"""
+        logical_rel = self._logical_relpath(filepath)
+        path_str = str(logical_rel)
+
+        # Check device mappings - longest key first for specificity
         sorted_devices = sorted(self.config['devices'].items(), key=lambda x: len(x[0]), reverse=True)
         for source_folder, device_name in sorted_devices:
-            if path_str.startswith(source_folder + '/'):
+            # we match at folder boundary: "<key>/" or exact "<key>"
+            if path_str == source_folder or path_str.startswith(source_folder + '/'):
                 return device_name
-        
-        # Check if it's a Riverside recording
+
+        # Riverside fallback (unchanged)
         if self.config.get('riverside', {}).get('enabled', False):
             for pattern in self.config['riverside'].get('source_patterns', []):
                 import fnmatch
                 if fnmatch.fnmatch(path_str, pattern):
                     return self.config['riverside']['device_name']
-        
-        # Check if it's in audio-tracks with date in filename
+
+        # audio-tracks fallback (unchanged)
         if path_str.startswith('audio-tracks'):
             pattern = self.config.get('audio_tracks', {}).get('filename_pattern')
             if pattern:
                 return self.config['devices'].get('dji-mic-2', 'AUDIO_dji-mic-2')
-        
+
         return None
-    
+
     def _determine_target_path(self, media_file: MediaFile) -> Path:
         """Determine target path for a media file"""
-        rel_path = media_file.source_path.relative_to(self.source_root)
-        path_str = str(rel_path)
-        
-        # Check if file is part of a special project
+        logical_rel = self._logical_relpath(media_file.source_path)
+        path_str = str(logical_rel)
+
+        # Project-preserve rules against logical path
         for project in self.config.get('projects', []):
             if path_str.startswith(project['source_path']):
                 if project.get('preserve_structure', False):
-                    # Keep internal structure
                     internal_path = Path(path_str).relative_to(project['source_path'])
                     return Path(project['target_path']) / internal_path
                 else:
-                    # Just the file in target path
                     return Path(project['target_path']) / media_file.source_path.name
-        
-        # Check if it's audio-tracks with date extraction
+
+        # audio-tracks rule (unchanged, but using logical path)
         if path_str.startswith('audio-tracks'):
             audio_config = self.config.get('audio_tracks', {})
             if audio_config.get('extract_date_from_filename'):
@@ -125,17 +144,17 @@ class MediaAnalyzer:
                 date = self._extract_date_from_filename(media_file.source_path.name, pattern)
                 if date:
                     target_base = Path(audio_config['target_base'])
-                    year_month_day = f"{date.year}/{date.year}-{date.month:02d}-{date.day:02d}"
-                    return target_base / year_month_day / media_file.source_path.name
-        
+                    ymd = f"{date.year}/{date.year}-{date.month:02d}-{date.day:02d}"
+                    return target_base / ymd / media_file.source_path.name
+
         # Standard device-based organization
         if media_file.device and media_file.creation_date:
             device_path = Path(f"/Originals/{media_file.device}")
             year = media_file.creation_date.year
             date_str = media_file.creation_date.strftime("%Y-%m-%d")
             return device_path / str(year) / date_str / media_file.source_path.name
-        
-        # Fallback: unknown folder
+
+        # Fallback
         return Path(f"/Originals/_unknown/{media_file.source_path.name}")
     
     def _get_file_type(self, filepath: Path) -> str:
@@ -225,6 +244,16 @@ class MediaAnalyzer:
                     all_files.append(filepath)
         
         console.print(f"Found [bold]{len(all_files)}[/bold] media files to process")
+
+        # After collecting all_files, do a quick sanity report:
+        logical_top_levels = set()
+        for p in all_files:
+            lr = self._logical_relpath(p)
+            if lr.parts:
+                logical_top_levels.add(lr.parts[0])
+        unknown = sorted(x for x in logical_top_levels if x not in self.config.get('devices', {}))
+        if unknown:
+            console.print(f"[yellow]Note:[/yellow] Unmapped top-level folders under source_roots: {', '.join(unknown)}")
         
         # Process files with progress bar
         with Progress(
